@@ -26,6 +26,10 @@ This extension contributes to the following VS Code settings:
 
 - `search.exclude`: Manages the patterns for excluding files and folders from search results
 
+## Contributing
+
+Contributions are welcome! Please visit our [GitHub repository](https://github.com/liberat0r/vs-code-exclude-folder) to contribute.
+
 ## Known Issues
 
 None at this time.
