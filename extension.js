@@ -2,57 +2,59 @@ const vscode = require("vscode");
 const path = require("path");
 const FolderDecorationProvider = require("./folderDecorationProvider");
 
-function getExcludePattern(fsPath) {
-  // Convert Windows path to forward slashes and make it relative to workspace
-  const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
-  if (!workspacePath) return null;
-
-  let relativePath = path.relative(workspacePath, fsPath);
-  relativePath = relativePath.replace(/\\/g, '/');
-  
-  // Create patterns to exclude the folder and all its contents
-  return {
-    [relativePath]: true,
-    [`${relativePath}/**`]: true  // This ensures all subfolders and files are excluded
-  };
-}
+// Keep track of excluded folders in memory
+let excludedFolders = [];
 
 function activate(context) {
   const decorationProvider = new FolderDecorationProvider();
-
   context.subscriptions.push(
     vscode.window.registerFileDecorationProvider(decorationProvider)
   );
 
+  // Update context for all folders when configuration changes
+  vscode.workspace.onDidChangeConfiguration((e) => {
+    if (e.affectsConfiguration("search.exclude")) {
+      updateExcludedFoldersContext();
+    }
+  });
+
+  // Initial context setup
+  updateExcludedFoldersContext();
+
   let excludeFolder = vscode.commands.registerCommand(
     "folder-exclude.excludeFolder",
     async (uri) => {
-      if (!uri) {
-        return;
-      }
+      if (!uri) return;
 
       try {
-        const excludePatterns = getExcludePattern(uri.fsPath);
-        if (!excludePatterns) {
-          throw new Error("No workspace folder found");
-        }
+        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+        if (!workspacePath) return;
 
-        // Only update search.exclude
-        const searchConfig = vscode.workspace.getConfiguration("search");
-        const searchExcluded = { ...searchConfig.get("exclude", {}) };
-        Object.assign(searchExcluded, excludePatterns);
-        
-        await searchConfig.update(
+        const relativePath = path
+          .relative(workspacePath, uri.fsPath)
+          .replace(/\\/g, "/");
+        const folderName = path.basename(uri.fsPath);
+        console.log("Excluding folder:", relativePath);
+
+        const config = vscode.workspace.getConfiguration("search");
+        const excludedPaths = { ...config.get("exclude", {}) };
+        excludedPaths[relativePath] = true;
+        excludedPaths[`${relativePath}/**`] = true;
+
+        await config.update(
           "exclude",
-          searchExcluded,
+          excludedPaths,
           vscode.ConfigurationTarget.Workspace
         );
-
-        decorationProvider.updateExcludedFolders(uri, true);
-        await vscode.commands.executeCommand('setContext', 'folder-exclude.isExcluded', true);
+        
+        // Update the excluded folders array
+        if (!excludedFolders.includes(folderName)) {
+          excludedFolders.push(folderName);
+          await vscode.commands.executeCommand('setContext', 'folder-exclude', excludedFolders);
+          console.log("Updated excluded folders:", excludedFolders);
+        }
       } catch (error) {
-        console.error('Error excluding folder:', error);
-        vscode.window.showErrorMessage(`Failed to exclude folder: ${error.message}`);
+        console.error("Error excluding folder:", error);
       }
     }
   );
@@ -60,40 +62,70 @@ function activate(context) {
   let includeFolder = vscode.commands.registerCommand(
     "folder-exclude.includeFolder",
     async (uri) => {
-      if (!uri) {
-        return;
-      }
+      if (!uri) return;
 
       try {
-        const excludePatterns = getExcludePattern(uri.fsPath);
-        if (!excludePatterns) {
-          throw new Error("No workspace folder found");
-        }
+        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+        if (!workspacePath) return;
 
-        // Remove from search.exclude
-        const searchConfig = vscode.workspace.getConfiguration("search");
-        const searchExcluded = { ...searchConfig.get("exclude", {}) };
-        
-        Object.keys(excludePatterns).forEach(pattern => {
-          delete searchExcluded[pattern];
-        });
-        
-        await searchConfig.update(
+        const relativePath = path
+          .relative(workspacePath, uri.fsPath)
+          .replace(/\\/g, "/");
+        const folderName = path.basename(uri.fsPath);
+        console.log("Including folder:", relativePath);
+
+        const config = vscode.workspace.getConfiguration("search");
+        const excludedPaths = { ...config.get("exclude", {}) };
+        delete excludedPaths[relativePath];
+        delete excludedPaths[`${relativePath}/**`];
+
+        await config.update(
           "exclude",
-          searchExcluded,
+          excludedPaths,
           vscode.ConfigurationTarget.Workspace
         );
-
-        decorationProvider.updateExcludedFolders(uri, false);
-        await vscode.commands.executeCommand('setContext', 'folder-exclude.isExcluded', false);
+        
+        // Update the excluded folders array
+        excludedFolders = excludedFolders.filter(name => name !== folderName);
+        await vscode.commands.executeCommand('setContext', 'folder-exclude', excludedFolders);
+        console.log("Updated excluded folders:", excludedFolders);
       } catch (error) {
-        console.error('Error including folder:', error);
-        vscode.window.showErrorMessage(`Failed to include folder: ${error.message}`);
+        console.error("Error including folder:", error);
       }
     }
   );
 
   context.subscriptions.push(excludeFolder, includeFolder);
+}
+
+async function updateExcludedFoldersContext() {
+  const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+  if (!workspacePath) return;
+
+  const config = vscode.workspace.getConfiguration("search");
+  const excludedPaths = config.get("exclude", {});
+
+  // Get all folders in workspace
+  const folders = await vscode.workspace.findFiles("**/");
+  
+  // Create a set of existing folder names for faster lookup
+  const existingFolders = new Set(excludedFolders);
+  
+  // Check each folder in the workspace
+  for (const folder of folders) {
+    const relativePath = path
+      .relative(workspacePath, folder.fsPath)
+      .replace(/\\/g, "/");
+    if (excludedPaths[relativePath] === true) {
+      const folderName = path.basename(folder.fsPath);
+      if (!existingFolders.has(folderName)) {
+        excludedFolders.push(folderName);
+      }
+    }
+  }
+
+  await vscode.commands.executeCommand('setContext', 'folder-exclude', excludedFolders);
+  console.log("Current excluded folders:", excludedFolders);
 }
 
 function deactivate() {}

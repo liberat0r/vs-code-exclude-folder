@@ -2,8 +2,9 @@
   "name": "folder-exclude",
   "displayName": "Folder Exclude",
   "description": "Temporarily exclude folders from search with visual feedback",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "publisher": "liberat0r",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.84.0"
   },
@@ -40,12 +41,12 @@
     "menus": {
       "explorer/context": [
         {
-          "when": "explorerResourceIsFolder && !folder-exclude.isExcluded",
+          "when": "explorerResourceIsFolder && resourceFilename not in folder-exclude",
           "command": "folder-exclude.excludeFolder",
           "group": "2_workspace"
         },
         {
-          "when": "explorerResourceIsFolder && folder-exclude.isExcluded",
+          "when": "explorerResourceIsFolder && resourceFilename in folder-exclude",
           "command": "folder-exclude.includeFolder",
           "group": "2_workspace"
         }

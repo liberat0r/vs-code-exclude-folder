@@ -24,7 +24,7 @@ A Visual Studio Code extension that allows you to temporarily exclude folders fr
 
 This extension contributes to the following VS Code settings:
 
-* `search.exclude`: Manages the patterns for excluding files and folders from search results
+- `search.exclude`: Manages the patterns for excluding files and folders from search results
 
 ## Known Issues
 
@@ -32,24 +32,10 @@ None at this time.
 
 ## Release Notes
 
-### 0.0.1
+### 0.0.6
 
 Initial release:
+
 - Basic exclude/include functionality
 - Visual feedback for excluded folders
 - Context menu integration
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
