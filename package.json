@@ -1,0 +1,70 @@
+{
+  "name": "folder-exclude",
+  "displayName": "Folder Exclude",
+  "description": "Temporarily exclude folders from search with visual feedback",
+  "version": "0.0.1",
+  "publisher": "liberat0r",
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "exclude",
+    "folder",
+    "search",
+    "temporary",
+    "workspace"
+  ],
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liberat0r/vs-code-exclude-folder.git"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "folder-exclude.excludeFolder",
+        "title": "Exclude Folder"
+      },
+      {
+        "command": "folder-exclude.includeFolder",
+        "title": "Include Folder"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "when": "explorerResourceIsFolder && !folder-exclude.isExcluded",
+          "command": "folder-exclude.excludeFolder",
+          "group": "2_workspace"
+        },
+        {
+          "when": "explorerResourceIsFolder && folder-exclude.isExcluded",
+          "command": "folder-exclude.includeFolder",
+          "group": "2_workspace"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "node ./test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.84.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "eslint": "^8.54.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.2",
+    "@vscode/test-electron": "^2.3.8"
+  }
+}
