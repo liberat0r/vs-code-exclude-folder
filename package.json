@@ -2,7 +2,7 @@
   "name": "folder-exclude",
   "displayName": "Folder Exclude",
   "description": "Temporarily exclude folders from search with visual feedback",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "publisher": "liberat0r",
   "license": "MIT",
   "engines": {
